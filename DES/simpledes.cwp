@@ -1,0 +1,14 @@
+[Trace Management]
+tracefile0 = simpledes_data\traces\config_2019.07.20-17.33.20_.cfg
+enabled0 = True
+tracefile1 = simpledes_data\traces\config_2019.07.20-17.34.50_.cfg
+enabled1 = True
+tracefile2 = simpledes_data\traces\config_2019.07.20-17.36.26_.cfg
+enabled2 = True
+[ChipWhisperer]
+[[General Settings]]
+Project Name = Untitled
+Program Name = ChipWhisperer
+Project File Version = 1.00
+Project Author = Unknown
+Program Version = V4.0.1

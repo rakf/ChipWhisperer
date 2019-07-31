@@ -1,0 +1,14 @@
+[Trace Management]
+tracefile0 = TEA_fixed_key_random_plaintext_data\traces\config_2019.08.01-00.44.50_.cfg
+enabled0 = True
+tracefile1 = TEA_fixed_key_random_plaintext_data\traces\config_2019.08.01-01.48.47_.cfg
+enabled1 = True
+tracefile2 = TEA_fixed_key_random_plaintext_data\traces\config_2019.08.01-01.55.47_.cfg
+enabled2 = True
+[ChipWhisperer]
+[[General Settings]]
+Project Name = Untitled
+Program Name = ChipWhisperer
+Project File Version = 1.00
+Project Author = Unknown
+Program Version = V4.0.1
