@@ -1,0 +1,10 @@
+[Trace Management]
+tracefile0 = tmp\default_data\traces\config_2019.08.08-01.36.32_.cfg
+enabled0 = True
+[ChipWhisperer]
+[[General Settings]]
+Project Name = Untitled
+Program Name = ChipWhisperer
+Project File Version = 1.00
+Project Author = Unknown
+Program Version = V4.0.1
