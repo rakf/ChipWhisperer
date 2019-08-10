@@ -1,4 +1,5 @@
 import numpy as np
+import binascii
 import pygost.gost28147 as gost
 traces = np.load(r'C:\Users\user\chipwhisperer\projects\GOST_FF_data\traces\2019.08.08-01.36.32_traces.npy')
 text   = np.load(r'C:\Users\user\chipwhisperer\projects\GOST_FF_data\traces\2019.08.08-01.36.32_textin.npy')
@@ -45,7 +46,7 @@ def addmod(x, y, mod=2 ** 32):
     """
     r = x + int(y)
     return r if r < mod else r - mod
-def intermediate(sbox, key, data):
+def intermediate(sbox, key, data, byte):
     SEQ_ENCRYPT = (
     0, 1, 2, 3, 4, 5, 6, 7,
     0, 1, 2, 3, 4, 5, 6, 7,
@@ -53,21 +54,11 @@ def intermediate(sbox, key, data):
     7, 6, 5, 4, 3, 2, 1, 0,
 )
     s = SBOXES[sbox]
-    w = bytearray(key)
-    
-   
-   # x = [
-    #    w[3 + i * 4] |
-   #     w[2 + i * 4] << 8 |
-    #    w[1 + i * 4] << 16 |
-    #    w[0 + i * 4] << 24 for i in range(8)
-  #  ]
+    #key = int(binascii.hexlify(key_byte), 32)
     n1, n2 = block2ns(data)
-    sbox_leak = _K(s, addmod(n1, key))
     _in = addmod(n1, key)
-    sbox_leak = ((s[0][(_in >> 0) & 0x0F] << 0) +
-        (s[1][(_in >> 4) & 0x0F] << 4))
-    return sbox_leak
+    sbox_leak = _K(s, _in);
+    return (sbox_leak >> (8 * byte)) & 0xFF
 def inter(sbox, key, data):
     SEQ_ENCRYPT = (
     0, 1, 2, 3, 4, 5, 6, 7,
@@ -92,26 +83,25 @@ def inter(sbox, key, data):
         (s[1][(_in >> 4) & 0x0F] << 4) +
         (s[2][(_in >> 8) & 0x0F] << 8) +
         (s[3][(_in >> 12) & 0x0F] << 12))
-    print hex((sbox_leak))
     return sbox_leak
 numtraces = len(traces)
 numpoint = np.shape(traces)[1]
 bestguess = [0]*16
-#for j in range(32):
-#    print hex(keys[0][j])    
-#for j in range(8):
-#    print hex(text[0][j])
-for bnum in range(0, 1):
+best_round_guess = [0] * 4
+best_round = 0
+for bnum in range(0, 4):
     cpaoutput = [0]*256
     maxcpa = [0]*256
-    for kguess in range(0, 256):
+    for kguess in range(0,  256):
+        #best_round_guess[3-bnum] = kguess
         #Initialize arrays & variables to zero
+        best_round_key = kguess << (bnum * 8) | best_round
         sumnum = np.zeros(numpoint)
         sumden1 = np.zeros(numpoint)
         sumden2 = np.zeros(numpoint)
         hyp = np.zeros(numtraces)
         for tnum in range(numtraces):
-            hyp[tnum] = HW[intermediate("Gost28147_tc26_ParamZ",  kguess, text[tnum])]
+            hyp[tnum] = HW[intermediate("Gost28147_tc26_ParamZ",  best_round_key, text[tnum], bnum)]
         #Mean of hypothesis
         meanh = np.mean(hyp, dtype=np.float64)
         #Mean of all points in trace
@@ -120,17 +110,13 @@ for bnum in range(0, 1):
         for tnum in range(0, numtraces):
             hdiff = (hyp[tnum] - meanh)
             tdiff = traces[tnum,:] - meant
-
             sumnum = sumnum + (hdiff*tdiff)
             sumden1 = sumden1 + hdiff*hdiff 
             sumden2 = sumden2 + tdiff*tdiff
         cpaoutput[kguess] = sumnum / np.sqrt( sumden1 * sumden2 )
         maxcpa[kguess] = max(abs(cpaoutput[kguess]))
-
-        
+    best_round = best_round | (np.argmax(maxcpa) << (bnum * 8))
     bestguess[bnum] = np.argmax(maxcpa)
-print maxcpa[22]
 print "Best Key Guess: "
 for b in bestguess: print "%02x "%b,
-#print len(text[0])
-#print (gost.ecb_encrypt(keys[0], bytearray(text[0]))).encode("hex")
+
