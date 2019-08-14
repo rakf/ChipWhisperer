@@ -1,0 +1,10 @@
+[Trace Management]
+tracefile0 = gost_10000_2_data\traces\config_2019.08.11-19.53.25_.cfg
+enabled0 = True
+[ChipWhisperer]
+[[General Settings]]
+Project Name = Untitled
+Program Name = ChipWhisperer
+Project File Version = 1.00
+Project Author = Unknown
+Program Version = V4.0.1

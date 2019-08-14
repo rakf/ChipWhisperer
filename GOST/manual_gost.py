@@ -1,8 +1,9 @@
 import numpy as np
 import pygost.gost28147 as gost
-traces = np.load(r'C:\Users\user\chipwhisperer\projects\gost_24000_data\traces\2019.08.11-01.30.18_traces.npy')
-text   = np.load(r'C:\Users\user\chipwhisperer\projects\gost_24000_data\traces\2019.08.11-01.30.18_textin.npy')
-keys   = np.load(r'C:\Users\user\chipwhisperer\projects\gost_24000_data\traces\2019.08.11-01.30.18_keylist.npy')
+path = r'C:\Users\user\chipwhisperer\projects\gost_10000_2_data\traces\2019.08.11-19.53.25_'
+traces = np.load(path + 'traces.npy')
+text   = np.load(path + 'textin.npy')
+keys   = np.load(path + 'keylist.npy')
 HW = [bin(n).count("1") for n in range(0,256)]
 SBOXES = {"Gost28147_tc26_ParamZ": (
         (12, 4, 6, 2, 10, 5, 11, 9, 14, 8, 13, 7, 0, 3, 15, 1),
@@ -51,9 +52,7 @@ def _shift11(x):
     return ((x << 11) & (2 ** 32 - 1)) | ((x >> (32 - 11)) & (2 ** 32 - 1))
 def intermediate(sbox, key, data, byte):
     s = SBOXES[sbox]
-    #print hex(key)
     _in = addmod(data, key)
-    #print hex(_in)
     sbox_leak = _K(s, _in);
     return (sbox_leak >> (8 * byte)) & 0xFF
 def inter(sbox, key, data, nround):
@@ -72,50 +71,11 @@ def inter(sbox, key, data, nround):
 numtraces = len(traces)
 numpoint = np.shape(traces)[1]
 bestguess = [0]*32
-best_round_guess = [0] * 4
-best_round = 0
 round_data = [0] * numtraces
 for i in range(numtraces):
     round_data[i] = [0] * 8
-##bestguess[0] = 0x2b
-##bestguess[1] = 0x7e
-##bestguess[2] = 0x15
-##bestguess[3] = 0x16
 cpaoutput = [0]*256
 maxcpa = [0]*256
-#hyp[tnum] = HW[intermediate("Gost28147_tc26_ParamZ",  kguess, 227532900, 0)]
-##print intermediate("Gost28147_tc26_ParamZ",  166, 227532900, 0)
-##for kguess in range(0,  255):
-##      #best_round_guess[3-bnum] = kguess
-##      #Initialize arrays & variables to zero
-##      #best_round_key = kguess << (bnum * 8) | best_round
-##      sumnum = np.zeros(numpoint)
-##      sumden1 = np.zeros(numpoint)
-##      sumden2 = np.zeros(numpoint)
-##      hyp = np.zeros(numtraces)
-##      for tnum in range(numtraces):
-##              hyp[tnum] = HW[intermediate("Gost28147_tc26_ParamZ",  kguess, 985157942, 0)]
-##      #Mean of hypothesis
-##      meanh = np.mean(hyp, dtype=np.float64)
-##      #Mean of all points in trace
-##      meant = np.mean(traces, axis=0, dtype=np.float64)
-##      #For each trace, do the following
-##      for tnum in range(0, numtraces):
-##              hdiff = (hyp[tnum] - meanh)
-##              tdiff = traces[tnum,:] - meant
-##              sumnum = sumnum + (hdiff*tdiff)
-##              sumden1 = sumden1 + hdiff*hdiff
-##              sumden2 = sumden2 + tdiff*tdiff
-##      print sumnum
-##      cpaoutput[kguess] = sumnum / np.sqrt( sumden1 * sumden2 )
-##      maxcpa[kguess] = max(abs(cpaoutput[kguess]))
-##print maxcpa
-
-
-
-
-
-#print inter("Gost28147_tc26_ParamZ", bestguess, text[0], 1)
 for rnum in range(0, 8):
     best_round = 0
     for tnum_r in range(numtraces):
@@ -124,14 +84,13 @@ for rnum in range(0, 8):
         cpaoutput = [0]*256
         maxcpa = [0]*256
         for kguess in range(0,  256):
-            #best_round_guess[3-bnum] = kguess
             #Initialize arrays & variables to zero
             best_round_key = kguess << (bnum * 8) | best_round
             sumnum = np.zeros(numpoint)
             sumden1 = np.zeros(numpoint)
             sumden2 = np.zeros(numpoint)
             hyp = np.zeros(numtraces)
-            for tnum in range(1000):
+            for tnum in range(numtraces):
                 hyp[tnum] = HW[intermediate("Gost28147_tc26_ParamZ",  best_round_key, round_data[tnum][rnum], bnum)]
             #Mean of hypothesis
             meanh = np.mean(hyp, dtype=np.float64)
@@ -147,7 +106,7 @@ for rnum in range(0, 8):
             cpaoutput[kguess] = sumnum / np.sqrt( sumden1 * sumden2 )
             maxcpa[kguess] = max(abs(cpaoutput[kguess]))
         best_round = best_round | (np.argmax(maxcpa) << (bnum * 8))
-        print hex(best_round)
+        #print hex(best_round)
         bestguess[((rnum + 1) * 4)-bnum - 1] = np.argmax(maxcpa)
 print "Best Key Guess: "
 for b in bestguess: print "%02x "%b,
