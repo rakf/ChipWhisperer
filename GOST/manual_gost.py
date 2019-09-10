@@ -1,5 +1,4 @@
 import numpy as np
-import pygost.gost28147 as gost
 path = r'C:\Users\user\chipwhisperer\projects\gost_10000_2_data\traces\2019.08.11-19.53.25_'
 traces = np.load(path + 'traces.npy')
 text   = np.load(path + 'textin.npy')
@@ -50,12 +49,12 @@ def _shift11(x):
     """ 11-bit cyclic shift
     """
     return ((x << 11) & (2 ** 32 - 1)) | ((x >> (32 - 11)) & (2 ** 32 - 1))
-def intermediate(sbox, key, data, byte):
+def round(sbox, key, data, byte):
     s = SBOXES[sbox]
     _in = addmod(data, key)
     sbox_leak = _K(s, _in);
     return (sbox_leak >> (8 * byte)) & 0xFF
-def inter(sbox, key, data, nround):
+def Feistel(sbox, key, data, nround):
     s = SBOXES[sbox]
     w = bytearray(key)
     x = [
@@ -79,7 +78,7 @@ maxcpa = [0]*256
 for rnum in range(0, 8):
     best_round = 0
     for tnum_r in range(numtraces):
-        round_data[tnum_r][rnum] = inter("Gost28147_tc26_ParamZ", bestguess, text[tnum_r], rnum)
+        round_data[tnum_r][rnum] = Feistel("Gost28147_tc26_ParamZ", bestguess, text[tnum_r], rnum)
     for bnum in range(0, 4):
         cpaoutput = [0]*256
         maxcpa = [0]*256
@@ -91,7 +90,7 @@ for rnum in range(0, 8):
             sumden2 = np.zeros(numpoint)
             hyp = np.zeros(numtraces)
             for tnum in range(numtraces):
-                hyp[tnum] = HW[intermediate("Gost28147_tc26_ParamZ",  best_round_key, round_data[tnum][rnum], bnum)]
+                hyp[tnum] = HW[round("Gost28147_tc26_ParamZ",  best_round_key, round_data[tnum][rnum], bnum)]
             #Mean of hypothesis
             meanh = np.mean(hyp, dtype=np.float64)
             #Mean of all points in trace
@@ -106,7 +105,6 @@ for rnum in range(0, 8):
             cpaoutput[kguess] = sumnum / np.sqrt( sumden1 * sumden2 )
             maxcpa[kguess] = max(abs(cpaoutput[kguess]))
         best_round = best_round | (np.argmax(maxcpa) << (bnum * 8))
-        #print hex(best_round)
         bestguess[((rnum + 1) * 4)-bnum - 1] = np.argmax(maxcpa)
 print "Best Key Guess: "
 for b in bestguess: print "%02x "%b,
