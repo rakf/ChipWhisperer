@@ -1,5 +1,4 @@
 import numpy as np
-import pygost.gost28147 as gost
 path = r'C:\Users\user\chipwhisperer\projects\gost_10000_2_data\traces\2019.08.11-19.53.25_'
 traces = np.load(path + 'traces.npy')
 text   = np.load(path + 'textin.npy')
