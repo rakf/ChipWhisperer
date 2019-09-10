@@ -105,7 +105,6 @@ for rnum in range(0, 8):
             cpaoutput[kguess] = sumnum / np.sqrt( sumden1 * sumden2 )
             maxcpa[kguess] = max(abs(cpaoutput[kguess]))
         best_round = best_round | (np.argmax(maxcpa) << (bnum * 8))
-        #print hex(best_round)
         bestguess[((rnum + 1) * 4)-bnum - 1] = np.argmax(maxcpa)
 print "Best Key Guess: "
 for b in bestguess: print "%02x "%b,
