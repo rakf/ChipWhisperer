@@ -73,8 +73,6 @@ bestguess = [0]*32
 round_data = [0] * numtraces
 for i in range(numtraces):
     round_data[i] = [0] * 8
-cpaoutput = [0]*256
-maxcpa = [0]*256
 for rnum in range(0, 8):
     best_round = 0
     for tnum_r in range(numtraces):
